@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>My Personal Game Hub</title>
+    <style>
+        body { 
+            text-align: center; 
+            background: #222; 
+            color: white; 
+            font-family: sans-serif; 
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            flex-wrap: wrap;
+            margin-top: 20px;
+        }
+        .game-box {
+            background: #333;
+            padding: 20px;
+            border-radius: 10px;
+            border: 2px solid #555;
+            width: 440px;
+        }
+        canvas { background: #111; display: block; margin: 10px auto; border: 2px solid #444; }
+        .clicker-btn {
+            background: #ff5722;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 18px;
+            font-weight: bold;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 20px 0;
+            box-shadow: 0 4px #d84315;
+        }
+        .clicker-btn:active {
+            box-shadow: 0 0px #d84315;
+            transform: translateY(4px);
+        }
+        .shop-btn {
+            background: #4caf50;
+            color: white;
+            padding: 5px 10px;
+            margin: 5px;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>🎮 My Unblocked Game Hub</h1>
+    <p>All running locally from your code files.</p>
+
+    <div class="container">
+
+        <!-- GAME 1: SNAKE -->
+        <div class="game-box">
+            <h2>🐍 Retro Snake</h2>
+            <p>Use Arrow Keys. Score: <span id="snakeScore">0</span></p>
+            <canvas id="gameCanvas" width="400" height="400"></canvas>
+        </div>
+
+        <!-- GAME 2: CLICKER HERO -->
+        <div class="game-box">
+            <h2>⚡ Power Clicker</h2>
+            <p>Clicks: <span id="clickCount">0</span></p>
+            <button class="clicker-btn" id="clickMe">CLICK ME!</button>
+            
+            <h3>🛒 Upgrades Shop</h3>
+            <p>Clicks per second: <span id="cpsText">0</span></p>
+            <button class="shop-btn" id="buyAuto">Buy Auto-Clicker (Cost: <span id="costText">15</span>)</button>
+        </div>
+
+    </div>
+
+    <script>
+        // --- GAME 1: SNAKE ENGINE ---
+        const canvas = document.getElementById("gameCanvas");
+        const ctx = canvas.getContext("2d");
+        const gridSize = 20;
+        let snake = [{x: 160, y: 160}];
+        let dx = gridSize, dy = 0;
+        let food = {x: 80, y: 80};
+        let sScore = 0;
+
+        function snakeMain() {
+            if (hasGameEnded()) {
+                alert("Game Over! Snake Score: " + sScore);
+                snake = [{x: 160, y: 160}];
+                dx = gridSize; dy = 0;
+                sScore = 0;
+                document.getElementById("snakeScore").innerText = sScore;
+            }
+            setTimeout(function onTick() {
+                clearCanvas();
+                drawFood();
+                moveSnake();
+                drawSnake();
+                snakeMain();
+            }, 100);
+        }
+
+        function clearCanvas() { ctx.fillStyle = "#111"; ctx.fillRect(0, 0, canvas.width, canvas.height); }
+        function drawSnake() { ctx.fillStyle = 'lightgreen'; snake.forEach(part => ctx.fillRect(part.x, part.y, gridSize, gridSize)); }
+        function moveSnake() {
+            const head = {x: snake[0].x + dx, y: snake[0].y + dy};
+            snake.unshift(head);
+            if (snake[0].x === food.x && snake[0].y === food.y) {
+                sScore += 10;
+                document.getElementById("snakeScore").innerText = sScore;
+                generateFood();
+            } else { snake.pop(); }
+        }
+        function drawFood() { ctx.fillStyle = 'red'; ctx.fillRect(food.x, food.y, gridSize, gridSize); }
+        function generateFood() {
+            food.x = Math.floor(Math.random() * (canvas.width/gridSize)) * gridSize;
+            food.y = Math.floor(Math.random() * (canvas.height/gridSize)) * gridSize;
+        }
+        function hasGameEnded() {
+            for (let i = 4; i < snake.length; i++) { if (snake[i].x === snake[0].x && snake[i].y === snake[0].y) return true; }
+            return snake[0].x < 0 || snake[0].x >= canvas.width || snake[0].y < 0 || snake[0].y >= canvas.height;
+        }
+        window.addEventListener("keydown", e => {
+            if (e.key === "ArrowLeft" && dx === 0) { dx = -gridSize; dy = 0; }
+            if (e.key === "ArrowUp" && dy === 0) { dx = 0; dy = -gridSize; }
+            if (e.key === "ArrowRight" && dx === 0) { dx = gridSize; dy = 0; }
+            if (e.key === "ArrowDown" && dy === 0) { dx = 0; dy = gridSize; }
+        });
+
+        // --- GAME 2: CLICKER ENGINE ---
+        let clicks = 0;
+        let autoClickers = 0;
+        let autoCost = 15;
+
+        const clickBtn = document.getElementById("clickMe");
+        const countText = document.getElementById("clickCount");
+        const buyBtn = document.getElementById("buyAuto");
+        const costText = document.getElementById("costText");
+        const cpsText = document.getElementById("cpsText");
+
+        clickBtn.addEventListener("click", () => {
+            clicks++;
+            countText.innerText = clicks;
+        });
+
+        buyBtn.addEventListener("click", () => {
+            if (clicks >= autoCost) {
+                clicks -= autoCost;
+                autoClickers++;
+                autoCost = Math.round(autoCost * 1.5);
+                countText.innerText = clicks;
+                costText.innerText = autoCost;
+                cpsText.innerText = autoClickers;
+            }
+        });
+
+        // Loop that auto-clicks every second
+        setInterval(() => {
+            if (autoClickers > 0) {
+                clicks += autoClickers;
+                countText.innerText = clicks;
+            }
+        }, 1000);
+
+        // Start Systems
+        generateFood();
+        snakeMain();
+    </script>
+</body>
+</html>
